@@ -1,6 +1,7 @@
 data/
 voc_prepped/
 logs/
+tmp/
 
 
 
