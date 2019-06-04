@@ -36,9 +36,21 @@ def visualize_segmentation_dataset( images_path , segs_path ,  n_classes , do_au
 			seg_img[:,:,1] += ((seg[:,:,0] == c )*( colors[c][1] )).astype('uint8')
 			seg_img[:,:,2] += ((seg[:,:,0] == c )*( colors[c][2] )).astype('uint8')
 
-		cv2.imshow("img" , img )
-		cv2.imshow("seg_img" , seg_img )
-		cv2.waitKey()
+		h, w, c = img.shape
+		nh, nw = h, w
+		if nw > 600:
+			nw = 600
+			nh = int(nw * h / w)
+		img = cv2.resize(img, (nw, nh))
+		print('aaaaaa')
+		print((h,w,c))
+		print(img.shape)
+		seg_img = cv2.resize(seg_img, (nw, nh))
+		cv2.imshow("img", img)
+		cv2.imshow("seg_img", seg_img)
+		if cv2.waitKey(0) == ord('q'):
+			break
+	cv2.destroyAllWindows()
 
 
 
