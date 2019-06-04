@@ -41,6 +41,10 @@ def predict(model=None, inp=None, out_fname=None, checkpoints_path=None, legend_
     if isinstance(inp, six.string_types):
         inp = cv2.imread(inp)
 
+    assert len(inp.shape) == 3, "Image should be h,w,3 "
+    original_h = inp.shape[0]
+    original_w = inp.shape[1]
+
     output_width = model.output_width
     output_height = model.output_height
     input_width = model.input_width
@@ -58,7 +62,7 @@ def predict(model=None, inp=None, out_fname=None, checkpoints_path=None, legend_
             seg_img[:,:,0] += ((pr[:,:] == c) * (colors[c][0])).astype('uint8')
             seg_img[:,:,1] += ((pr[:,:] == c) * (colors[c][1])).astype('uint8')
             seg_img[:,:,2] += ((pr[:,:] == c) * (colors[c][2])).astype('uint8')
-        seg_img = cv2.resize(seg_img, (input_width, input_height))
+        seg_img = cv2.resize(seg_img, (original_w, original_h))
         cv2.imwrite(out_fname, seg_img)
 
     if legend_classnames is not None and out_legend_fname is not None:

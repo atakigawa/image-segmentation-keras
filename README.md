@@ -47,6 +47,13 @@ Following models are supported:
 | mobilenet_segnet | MobileNet         | Segnet             |
 
 
+Example results for the pre-trained models provided :
+
+Input Image            |  Output Segmentation Image 
+:-------------------------:|:-------------------------:
+![](sample_images/1_input.jpg)  |  ![](sample_images/1_output.png)
+![](sample_images/3_input.jpg)  |  ![](sample_images/3_output.png)
+
 
 ## Getting Started
 
@@ -66,6 +73,7 @@ sudo pip install --upgrade keras
 Install the module
 ```shell
 git clone https://github.com/divamgupta/image-segmentation-keras
+cd image-segmentation-keras
 python setup.py install
 ```
 pip install will be available soon!
@@ -75,10 +83,16 @@ pip install will be available soon!
 ```python
 import keras_segmentation
 
-model = keras_segmentation.pretrained.resnet_pspnet_VOC12_v0_1() # load the pretrained model
+model = keras_segmentation.pretrained.pspnet_50_ADE_20K() # load the pretrained model trained on ADE20k dataset
+
+model = keras_segmentation.pretrained.pspnet_101_cityscapes() # load the pretrained model trained on Cityscapes dataset
+
+model = keras_segmentation.pretrained.pspnet_101_voc12() # load the pretrained model trained on Pascal VOC 2012 dataset
+
+# load any of the 3 pretrained models
 
 out = model.predict_segmentation(
-    inp="voc_prepped/images_prepped_test/2007_000738.jpg",
+    inp="input_image.jpg",
     out_fname="out.png"
 )
 
