@@ -112,13 +112,16 @@ def image_segmentation_generator(images_path, segs_path, batch_size, n_classes, 
         yield np.array(X), np.array(Y)
 
 
-def image_segmentation_generator2(img_seg_pairs, batch_size, n_classes, input_height, input_width, output_height, output_width, do_augment=False):
+def image_segmentation_generator2(img_seg_pairs, batch_size, n_classes, input_height, input_width, output_height, output_width, do_augment=False, image_augmenter=None):
     random.shuffle(img_seg_pairs)
     zipped = itertools.cycle(img_seg_pairs)
 
     while True:
         X = []
         Y = []
+        if do_augment:
+            if image_augmenter is not None:
+                image_augmenter.shuffle()
         for _ in range(batch_size):
             im, seg = next(zipped)
 
@@ -126,7 +129,10 @@ def image_segmentation_generator2(img_seg_pairs, batch_size, n_classes, input_he
             seg = cv2.imread(seg, 1)
 
             if do_augment:
-                im, seg[:,:,0] = augment_seg(im, seg[:,:,0])
+                if image_augmenter is not None:
+                    im, seg[:,:,0] = image_augmenter.augment_seg(im, seg[:,:,0])
+                else:
+                    im, seg[:,:,0] = augment_seg(im, seg[:,:,0])
 
             X.append(get_image_arr(im, input_width, input_height, ordering=IMAGE_ORDERING))
             Y.append(get_segmentation_arr(seg, n_classes, output_width, output_height))

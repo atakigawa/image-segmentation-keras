@@ -10,7 +10,7 @@ random.seed(0)
 class_colors = [(random.randint(0,255),random.randint(0,255),random.randint(0,255)) for _ in range(5000)]
 
 
-def visualize_segmentation_dataset(images_path, segs_path, n_classes, do_augment=False):
+def visualize_segmentation_dataset(images_path, segs_path, n_classes, do_augment=False, image_augmenter=None):
     img_seg_pairs = get_pairs_from_paths(images_path, segs_path)
     colors = class_colors
 
@@ -23,7 +23,10 @@ def visualize_segmentation_dataset(images_path, segs_path, n_classes, do_augment
         seg_img = np.zeros_like(seg)
 
         if do_augment:
-            img, seg[:,:,0] = augment_seg(img,seg[:,:,0])
+            if image_augmenter is not None:
+                img, seg[:,:,0] = image_augmenter.augment_seg(img, seg[:,:,0])
+            else:
+                img, seg[:,:,0] = augment_seg(img, seg[:,:,0])
 
         for c in range(n_classes):
             seg_img[:,:,0] += ((seg[:,:,0] == c) * (colors[c][0])).astype('uint8')

@@ -81,15 +81,12 @@ def _get_aug():
     )
 
 
-def _augment_seg(img, seg, image_augmenter=None):
+def _augment_seg(img, seg):
 
     import imgaug as ia
 
     if seq[0] is None:
-        if image_augmenter is None:
-            seq[0] = _get_aug()
-        else:
-            seq[0] = image_augmenter()
+        seq[0] = _get_aug()
 
     aug_det = seq[0].to_deterministic()
     image_aug = aug_det.augment_image(img)
@@ -113,5 +110,5 @@ def try_n_times(fn, n, *args, **kargs):
     return fn(*args, **kargs)
 
 
-def augment_seg(img, seg, image_augmenter=None):
-    return try_n_times(_augment_seg, 10, img, seg, image_augmenter=image_augmenter)
+def augment_seg(img, seg):
+    return try_n_times(_augment_seg, 10, img, seg)
