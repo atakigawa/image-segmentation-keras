@@ -5,14 +5,14 @@ import cv2
 seq = [None]
 
 
-def load_aug():
+def _get_aug():
 
     import imgaug as ia
     from imgaug import augmenters as iaa
 
     sometimes = lambda aug: iaa.Sometimes(0.5, aug)
 
-    seq[0] = iaa.Sequential(
+    return iaa.Sequential(
         [
             # apply the following augmenters to most images
             iaa.Fliplr(0.5), # horizontally flip 50% of all images
@@ -81,12 +81,15 @@ def load_aug():
     )
 
 
-def _augment_seg(img, seg):
+def _augment_seg(img, seg, image_augmenter=None):
 
     import imgaug as ia
 
     if seq[0] is None:
-        load_aug()
+        if image_augmenter is None:
+            seq[0] = _get_aug()
+        else:
+            seq[0] = image_augmenter()
 
     aug_det = seq[0].to_deterministic()
     image_aug = aug_det.augment_image(img)
@@ -110,5 +113,5 @@ def try_n_times(fn, n, *args, **kargs):
     return fn(*args, **kargs)
 
 
-def augment_seg(img, seg):
-    return try_n_times(_augment_seg, 10, img, seg)
+def augment_seg(img, seg, image_augmenter=None):
+    return try_n_times(_augment_seg, 10, img, seg, image_augmenter=image_augmenter)
