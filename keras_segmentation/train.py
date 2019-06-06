@@ -13,17 +13,6 @@ import random
 random.seed(0)
 
 
-# def find_latest_checkpoint(checkpoints_path):
-#     ep = 0
-#     r = None
-#     while True:
-#         if os.path.isfile(checkpoints_path + "." + str(ep)):
-#             r = checkpoints_path + "." + str(ep)
-#         else:
-#             return r
-#         ep += 1
-
-
 def find_latest_checkpoint(checkpoints_path):
     ckpts = glob.glob(osp.join(checkpoints_path, 'ep*.h5'))
     ckpts.sort()
@@ -36,16 +25,18 @@ def train(model,
         input_height=None,
         input_width=None,
         n_classes=None,
-        verify_dataset=True,
-        checkpoints_path=None,
         epochs=5,
         batch_size=2,
-        validate=False,
+        verify_dataset=True,
+        checkpoints_path=None,
         auto_resume_checkpoint=False,
         load_weights=None,
         optimizer_name='adadelta',
+        validate=False,
+        val_split=0.1,
         class_weight=None,
-        val_split=0.1):
+        do_augment_on_training=False,
+        image_augmenter=None):
 
     if checkpoints_path is None:
         print('ERR: checkpoints_path is required.')
@@ -131,7 +122,8 @@ def train(model,
     if validate:
         train_gen = image_segmentation_generator2(
                 train_img_seg_pair[:num_train], batch_size, n_classes,
-                input_height, input_width, output_height, output_width)
+                input_height, input_width, output_height, output_width,
+                do_augment=do_augment_on_training, image_augmenter=image_augmenter)
         val_gen = image_segmentation_generator2(
                 train_img_seg_pair[num_train:], batch_size, n_classes,
                 input_height, input_width, output_height, output_width)
@@ -145,7 +137,8 @@ def train(model,
     else:
         train_gen = image_segmentation_generator2(
                 train_img_seg_pair, batch_size, n_classes,
-                input_height, input_width, output_height, output_width)
+                input_height, input_width, output_height, output_width,
+                do_augment=do_augment_on_training, image_augmenter=image_augmenter)
         model.fit_generator(
                 train_gen,
                 steps_per_epoch=max(1, num_train // batch_size),
