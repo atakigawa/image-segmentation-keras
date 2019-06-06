@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import random
-import argparse
 
 from .augmentation import augment_seg
 from .data_loader import get_pairs_from_paths
@@ -76,6 +75,7 @@ def visualize_segmentation_dataset_one(images_path, segs_path, n_classes, do_aug
 
 
 if __name__ == "__main__":
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--images", type=str)
     parser.add_argument("--annotations", type=str)

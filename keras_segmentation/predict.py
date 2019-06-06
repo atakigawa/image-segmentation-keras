@@ -51,7 +51,7 @@ def predict(model=None, inp=None, out_fname=None, checkpoints_path=None, legend_
     input_height = model.input_height
     n_classes = model.n_classes
 
-    x = get_image_arr(inp, input_width, input_height, ordering=IMAGE_ORDERING)
+    x = get_image_arr(inp, input_width, input_height, data_format=IMAGE_ORDERING)
     pr = model.predict(np.array([x]))[0]
     pr = pr.reshape((output_height, output_width, n_classes)).argmax(axis=2)
 
