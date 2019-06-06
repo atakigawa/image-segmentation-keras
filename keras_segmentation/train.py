@@ -9,6 +9,9 @@ from .models import model_from_name
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from .weighted_categorical_crossentropy import weighted_categorical_crossentropy
 
+import random
+random.seed(0)
+
 
 # def find_latest_checkpoint(checkpoints_path):
 #     ep = 0
@@ -38,9 +41,6 @@ def train(model,
         epochs=5,
         batch_size=2,
         validate=False,
-        val_images=None,
-        val_annotations=None,
-        val_batch_size=2,
         auto_resume_checkpoint=False,
         load_weights=None,
         optimizer_name='adadelta',
@@ -93,29 +93,23 @@ def train(model,
     log_dir = checkpoints_path
     if log_dir[-1] != '/':
         log_dir += '/'
+    cb_monitor_target = 'loss'
+    cb_ckpt_filename_tpl = 'ep{epoch:03d}-loss{loss:.3f}.h5'
+    if validate:
+        cb_monitor_target = 'val_loss'
+        cb_ckpt_filename_tpl = 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5'
+
     cb_logging = TensorBoard(log_dir=log_dir)
-    if not validate:
-        cb_checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}.h5',
-                monitor='loss',
-                save_weights_only=True,
-                save_best_only=True,
-                period=3)
-        cb_early_stopping = EarlyStopping(
-                monitor='loss',
-                min_delta=0,
-                patience=10,
-                verbose=1)
-    else:
-        cb_checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
-                monitor='val_loss',
-                save_weights_only=True,
-                save_best_only=True,
-                period=3)
-        cb_early_stopping = EarlyStopping(
-                monitor='val_loss',
-                min_delta=0,
-                patience=10,
-                verbose=1)
+    cb_checkpoint = ModelCheckpoint(log_dir + cb_ckpt_filename_tpl,
+            monitor=cb_monitor_target,
+            save_weights_only=True,
+            save_best_only=True,
+            period=3)
+    cb_early_stopping = EarlyStopping(
+            monitor=cb_monitor_target,
+            min_delta=0,
+            patience=10,
+            verbose=1)
 
     if (load_weights is not None) and len(load_weights) > 0:
         print("Loading weights from ", load_weights)
@@ -132,33 +126,32 @@ def train(model,
         verify_segmentation_dataset(train_images, train_annotations, n_classes)
 
     train_img_seg_pair = get_pairs_from_paths(train_images, train_annotations)
-    train_gen = image_segmentation_generator2(
-            train_img_seg_pair, batch_size, n_classes,
-            input_height, input_width, output_height, output_width)
+    random.shuffle(train_img_seg_pair)
 
     if validate:
-        val_img_seg_pair = get_pairs_from_paths(val_images, val_annotations)
-        val_gen = image_segmentation_generator2(
-                val_img_seg_pair, val_batch_size, n_classes,
+        train_gen = image_segmentation_generator2(
+                train_img_seg_pair[:num_train], batch_size, n_classes,
                 input_height, input_width, output_height, output_width)
-
-    if not validate:
-        model.fit_generator(
-                train_gen,
-                steps_per_epoch=max(1, num_train // batch_size),
-                epochs=epochs,
-                callbacks=[cb_logging, cb_checkpoint, cb_early_stopping])
-        final_weight_path = osp.join(checkpoints_path, 'weights_final.h5')
-        model.save_weights(final_weight_path)
-        print("saved ", final_weight_path)
-    else:
+        val_gen = image_segmentation_generator2(
+                train_img_seg_pair[num_train:], batch_size, n_classes,
+                input_height, input_width, output_height, output_width)
         model.fit_generator(
                 train_gen,
                 steps_per_epoch=max(1, num_train // batch_size),
                 validation_data=val_gen,
-                validation_steps=200,  # TODO nantokasuru
+                validation_steps=max(1, num_val // batch_size),
                 epochs=epochs,
                 callbacks=[cb_logging, cb_checkpoint, cb_early_stopping])
-        final_weight_path = osp.join(checkpoints_path, 'weights_final.h5')
-        model.save_weights(final_weight_path)
-        print("saved ", final_weight_path)
+    else:
+        train_gen = image_segmentation_generator2(
+                train_img_seg_pair, batch_size, n_classes,
+                input_height, input_width, output_height, output_width)
+        model.fit_generator(
+                train_gen,
+                steps_per_epoch=max(1, num_train // batch_size),
+                epochs=epochs,
+                callbacks=[cb_logging, cb_checkpoint, cb_early_stopping])
+
+    final_weight_path = osp.join(checkpoints_path, 'weights_final.h5')
+    model.save_weights(final_weight_path)
+    print("saved ", final_weight_path)

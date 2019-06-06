@@ -29,27 +29,26 @@ def get_pairs_from_paths(images_path, segs_path):
     return ret
 
 
-def get_image_arr(path, width, height, imgNorm="sub_mean", ordering='channels_first'):
+def get_image_arr(path, width, height, img_norm='sub_mean', data_format='channels_first'):
     if type(path) is np.ndarray:
         img = path
     else:
         img = cv2.imread(path, 1)
 
-    if imgNorm == "sub_and_divide":
+    if img_norm == "sub_and_divide":
         img = np.float32(cv2.resize(img, (width, height))) / 127.5 - 1
-    elif imgNorm == "sub_mean":
+    elif img_norm == "sub_mean":
         img = cv2.resize(img, (width, height))
         img = img.astype(np.float32)
-        img[:,:,0] -= 103.939
-        img[:,:,1] -= 116.779
-        img[:,:,2] -= 123.68
-        img = img[:, :, ::-1]
-    elif imgNorm == "divide":
+        img[:,:,0] -= 103.939  # B
+        img[:,:,1] -= 116.779  # G
+        img[:,:,2] -= 123.68   # R
+    elif img_norm == "divide":
         img = cv2.resize(img, (width, height))
         img = img.astype(np.float32)
-        img = img/255.0
+        img = img / 255.0
 
-    if ordering == 'channels_first':
+    if data_format == 'channels_first':
         img = np.rollaxis(img, 2, 0)
     return img
 
@@ -106,7 +105,7 @@ def image_segmentation_generator(images_path, segs_path, batch_size, n_classes, 
             if do_augment:
                 im, seg[:,:,0] = augment_seg(im, seg[:,:,0])
 
-            X.append(get_image_arr(im, input_width, input_height, ordering=IMAGE_ORDERING))
+            X.append(get_image_arr(im, input_width, input_height, data_format=IMAGE_ORDERING))
             Y.append(get_segmentation_arr(seg, n_classes, output_width, output_height))
 
         yield np.array(X), np.array(Y)
@@ -134,7 +133,7 @@ def image_segmentation_generator2(img_seg_pairs, batch_size, n_classes, input_he
                 else:
                     im, seg[:,:,0] = augment_seg(im, seg[:,:,0])
 
-            X.append(get_image_arr(im, input_width, input_height, ordering=IMAGE_ORDERING))
+            X.append(get_image_arr(im, input_width, input_height, data_format=IMAGE_ORDERING))
             Y.append(get_segmentation_arr(seg, n_classes, output_width, output_height))
 
         yield np.array(X), np.array(Y)
