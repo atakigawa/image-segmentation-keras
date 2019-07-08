@@ -33,6 +33,7 @@ def train(model,
         load_weights=None,
         optimizer='adadelta',
         loss_func='categorical_crossentropy',
+        metrics=['accuracy'],
         validate=False,
         val_split=0.1,
         class_weight=None,
@@ -66,7 +67,7 @@ def train(model,
 
     if class_weight is not None:
         loss_func = weighted_categorical_crossentropy(class_weight)
-    model.compile(loss=loss_func, optimizer=optimizer, metrics=['accuracy'])
+    model.compile(loss=loss_func, optimizer=optimizer, metrics=metrics)
 
     os.makedirs(checkpoints_path, exist_ok=True)
     with open(osp.join(checkpoints_path, "info.json"), "w") as fh:
