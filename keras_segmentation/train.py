@@ -31,7 +31,8 @@ def train(model,
         checkpoints_path=None,
         auto_resume_checkpoint=False,
         load_weights=None,
-        optimizer_name='adadelta',
+        optimizer='adadelta',
+        loss_func='categorical_crossentropy',
         validate=False,
         val_split=0.1,
         class_weight=None,
@@ -63,15 +64,12 @@ def train(model,
         num_val = int(num_train * val_split)
         num_train = num_train - num_val
 
-    loss_func = 'categorical_crossentropy'
     if class_weight is not None:
         loss_func = weighted_categorical_crossentropy(class_weight)
-    model.compile(loss=loss_func,
-        optimizer=optimizer_name,
-        metrics=['accuracy'])
+    model.compile(loss=loss_func, optimizer=optimizer, metrics=['accuracy'])
 
     os.makedirs(checkpoints_path, exist_ok=True)
-    with open(osp.join(checkpoints_path, "_config.json"), "w") as fh:
+    with open(osp.join(checkpoints_path, "info.json"), "w") as fh:
         fh.write(json.dumps({
             "model_class": model.model_name,
             "n_classes": n_classes,
